@@ -26,12 +26,21 @@ let persons = [
     }
 ]
 
+const phonebookInfo = () => {
+    const date = new Date()
+    return `
+        <p>Phonebook has info for ${persons.length} people<br /></p>
+        <p>${date.toString()}</p>
+    `
+}
+
 app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
 
-app.get('/api/notes', (request, response) => {
-  response.json(notes)
+app.get('/info', (request, response) => {
+  response.type('html')
+  response.send(phonebookInfo())
 })
 
 const PORT = 3001
