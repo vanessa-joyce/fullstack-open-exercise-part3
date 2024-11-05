@@ -34,6 +34,15 @@ const phonebookInfo = () => {
     `
 }
 
+const nameExists = (name) => {
+    return persons.some(person => person.name === name)
+}
+
+const sendErrorResponse = (response, status, message) => {
+    response.statusMessage = message
+    return response.status(status).end()
+}
+
 app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
@@ -47,8 +56,14 @@ app.get('/api/persons/:id', (request, response) => {
   
 app.post('/api/persons', (request, response) => {
     const id = Math.floor(Math.random() * 100000)
-    let newPerson = {...request.body, id: `${id}`}
-    persons = persons.concat(newPerson)
+    const body = request.body
+    if (!body.name) return sendErrorResponse(response, 422, 'Name attribute must exist')
+    if (!body.number) return sendErrorResponse(response, 422, 'Number attribute must exist')
+    if (nameExists(body.name)) return sendErrorResponse(response, 422, 'Name must be unique')
+
+    const person = {...body, id: `${id}`}
+    persons = persons.concat(person)
+    return response.json(person)
 })
 
 
