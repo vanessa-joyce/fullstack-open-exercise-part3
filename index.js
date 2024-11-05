@@ -44,17 +44,26 @@ app.get('/api/persons/:id', (request, response) => {
     if (person) response.json(person)
     response.status(404).end()
   })
-
-app.get('/info', (request, response) => {
-  response.type('html')
-  response.send(phonebookInfo())
+  
+app.post('/api/persons', (request, response) => {
+    const id = Math.floor(Math.random() * 100000)
+    let newPerson = {...request.body, id: `${id}`}
+    persons = persons.concat(newPerson)
 })
+
 
 app.delete('/api/persons/:id', (request, response) => {
     const id = request.params.id
     persons = persons.filter(person => person.id !== id)
     response.json(persons)
 })
+
+app.get('/info', (request, response) => {
+  response.type('html')
+  response.send(phonebookInfo())
+})
+
+
 
 const PORT = 3001
 app.listen(PORT, () => {
