@@ -2,7 +2,9 @@ const express = require('express')
 const morgan = require('morgan')
 const app = express()
 
-app.use(express.json())
+morgan.token('request-body', (request) => {
+    return JSON.stringify(request.body)
+})
 
 const requestLogger = (request, response, next) => {
     console.log('Method:', request.method)
@@ -12,8 +14,9 @@ const requestLogger = (request, response, next) => {
     next()
 }
 
+app.use(express.json())
 app.use(requestLogger)
-app.use(morgan('tiny'))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :request-body'))
 
 let persons = [
     { 
