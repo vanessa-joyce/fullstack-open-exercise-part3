@@ -1,6 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person')
 
 const app = express()
 morgan.token('request-body', (request) => {
@@ -21,29 +23,6 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :request-body'))
 
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 const phonebookInfo = () => {
     const date = new Date()
     return `
@@ -62,7 +41,9 @@ const sendErrorResponse = (response, status, message) => {
 }
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
 app.get('/api/persons/:id', (request, response) => {
@@ -73,15 +54,19 @@ app.get('/api/persons/:id', (request, response) => {
   })
   
 app.post('/api/persons', (request, response) => {
-    const id = Math.floor(Math.random() * 100000)
     const body = request.body
     if (!body.name) return sendErrorResponse(response, 422, 'Name attribute must exist')
     if (!body.number) return sendErrorResponse(response, 422, 'Number attribute must exist')
     if (nameExists(body.name)) return sendErrorResponse(response, 422, 'Name must be unique')
+    
+    const person = new Person({
+      name: body.name,
+      number: body.number
+    })
 
-    const person = {...body, id: `${id}`}
-    persons = persons.concat(person)
-    return response.json(person)
+    person.save().then(savedNote => {
+      response.json(savedNote)
+    })
 })
 
 
