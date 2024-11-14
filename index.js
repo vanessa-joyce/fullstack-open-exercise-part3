@@ -47,17 +47,16 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    const person = persons.find(person => person.id === id)
-    if (person) response.json(person)
-    response.status(404).end()
+    Person.findById(request.params.id).then(person => {
+      return response.json(person)
+    })
   })
   
 app.post('/api/persons', (request, response) => {
     const body = request.body
     if (!body.name) return sendErrorResponse(response, 422, 'Name attribute must exist')
     if (!body.number) return sendErrorResponse(response, 422, 'Number attribute must exist')
-    if (nameExists(body.name)) return sendErrorResponse(response, 422, 'Name must be unique')
+    // if (nameExists(body.name)) return sendErrorResponse(response, 422, 'Name must be unique')
     
     const person = new Person({
       name: body.name,
@@ -71,9 +70,10 @@ app.post('/api/persons', (request, response) => {
 
 
 app.delete('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    persons = persons.filter(person => person.id !== id)
+  Person.findByIdAndDelete(request.params.id)
+  .then(persons => {
     response.json(persons)
+  })
 })
 
 app.get('/info', (request, response) => {
