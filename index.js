@@ -23,16 +23,22 @@ app.use(express.json())
 app.use(requestLogger)
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :request-body'))
 
-const phonebookInfo = () => {
-    const date = new Date()
-    return `
-        <p>Phonebook has info for ${persons.length} people<br /></p>
-        <p>${date.toString()}</p>
-    `
+const getAllPersons = () => {
+  return Person.find({}).then(persons => {
+    console.log(persons, 'persons')
+    return persons
+  })
 }
 
-const nameExists = (name) => {
-    return persons.some(person => person.name === name)
+const phonebookInfo = () => {
+    const date = new Date()
+    return getAllPersons()
+    .then(persons => {
+      return `
+      <p>Phonebook has info for ${persons.length} people<br /></p>
+      <p>${date.toString()}</p>
+  `
+    })
 }
 
 const sendErrorResponse = (response, status, message) => {
@@ -46,12 +52,13 @@ app.get('/api/persons', (request, response) => {
   })
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    Person.findById(request.params.id).then(person => {
-      return response.json(person)
-    })
+app.get('/api/persons/:id', (request, response, next) => {
+  Person.findById(request.params.id).then(person => {
+    return response.json(person)
   })
-  
+  .catch(error => next(error))
+})
+
 app.post('/api/persons', (request, response) => {
     const body = request.body
     if (!body.name) return sendErrorResponse(response, 422, 'Name attribute must exist')
@@ -100,7 +107,10 @@ app.delete('/api/persons/:id', (request, response, next) => {
 
 app.get('/info', (request, response) => {
   response.type('html')
-  response.send(phonebookInfo())
+  phonebookInfo().then(content => {
+    response.send(content)
+  })
+
 })
 
 const unknownEndpoint = (request, response) => {
