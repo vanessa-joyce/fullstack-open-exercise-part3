@@ -57,7 +57,12 @@ app.post('/api/persons', (request, response) => {
     if (!body.name) return sendErrorResponse(response, 422, 'Name attribute must exist')
     if (!body.number) return sendErrorResponse(response, 422, 'Number attribute must exist')
     // if (nameExists(body.name)) return sendErrorResponse(response, 422, 'Name must be unique')
-    
+    Person.find({name: body.name}), (err, data) => {
+      console.log(data, 'person found')
+      if (data) return false
+    }
+
+
     const person = new Person({
       name: body.name,
       number: body.number
@@ -66,6 +71,22 @@ app.post('/api/persons', (request, response) => {
     person.save().then(savedNote => {
       response.json(savedNote)
     })
+})
+
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+  const person = {
+    number: body.number,
+    name: body.name
+  }
+
+  console.log(person, 'person')
+
+  Person.findByIdAndUpdate(request.params.id, person, {new: true})
+  .then(updatedPerson => {
+    response.json(updatedPerson)
+  })
+  .catch(error => next(error))
 })
 
 
@@ -87,6 +108,16 @@ const unknownEndpoint = (request, response) => {
 }
 
 app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.log(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id'})
+  }
+
+  next(error)
+}
 
 
 const PORT = process.env.PORT || 3001
