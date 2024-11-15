@@ -69,11 +69,12 @@ app.post('/api/persons', (request, response) => {
 })
 
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
   .then(persons => {
     response.json(persons)
   })
+  .catch(error => next(error))
 })
 
 app.get('/info', (request, response) => {
