@@ -59,25 +59,25 @@ app.get('/api/persons/:id', (request, response, next) => {
   .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
-    const body = request.body
-    if (!body.name) return sendErrorResponse(response, 422, 'Name attribute must exist')
-    if (!body.number) return sendErrorResponse(response, 422, 'Number attribute must exist')
+app.post('/api/persons', (request, response, next) => {
+    const { name, number } = request.body
+    if (!number) return sendErrorResponse(response, 422, 'Number attribute must exist')
     // if (nameExists(body.name)) return sendErrorResponse(response, 422, 'Name must be unique')
-    Person.find({name: body.name}), (err, data) => {
+    Person.find({name: name}), (err, data) => {
       console.log(data, 'person found')
-      if (data) return false
+      if (data) return response.json(400).send({ error: 'person already exists'})
     }
 
 
     const person = new Person({
-      name: body.name,
-      number: body.number
+      name: name,
+      number: number
     })
 
-    person.save().then(savedNote => {
-      response.json(savedNote)
+    person.save().then(savedPerson => {
+      response.json(savedPerson)
     })
+    .catch(error => next(error))
 })
 
 app.put('/api/persons/:id', (request, response, next) => {
@@ -86,8 +86,6 @@ app.put('/api/persons/:id', (request, response, next) => {
     number: body.number,
     name: body.name
   }
-
-  console.log(person, 'person')
 
   Person.findByIdAndUpdate(request.params.id, person, {new: true})
   .then(updatedPerson => {
@@ -124,10 +122,14 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id'})
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).send({ error: error.message})
   }
 
   next(error)
 }
+
+app.use(errorHandler)
 
 
 const PORT = process.env.PORT || 3001
